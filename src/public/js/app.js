@@ -62,7 +62,7 @@ socket.on("welcome", (user,newCount)=>{
 });
 socket.on("bye", (left, newCount)=>{
     addMessage(` ${left}님이  나갔습니다.`);
-    const h3 = room.querySelector("h3");
+        const h3 = room.querySelector("h3");
     h3.innerText= `Room ${roomName} (${newCount})`;
 });
 socket.on("new_message", addMessage);
