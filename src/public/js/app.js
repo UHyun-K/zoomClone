@@ -13,6 +13,7 @@ let myStream;
 let muted= false;
 let cameraOff = false;
 let roomName;
+let myPeerConnection;
 
 async function getCameras(){
 try{
@@ -93,10 +94,11 @@ camerasSelect.addEventListener("input", handleCameraChange);
 const welcome = document.getElementById("welcome");
 const welcomeForm = welcome.querySelector("form");
 
-function startMedia() {
+async function  startMedia ( ) {
   welcome.hidden = true;
   call.hidden = false;
-  getMedia();
+  await getMedia();
+  makeConnection();
 }
 
 function handleWelcomeSubmit(event) {
@@ -111,6 +113,21 @@ welcomeForm.addEventListener("submit", handleWelcomeSubmit);
 
 // Socket Code
 
-socket.on("welcome", () => {
-  console.log("someone joined");
+socket.on("welcome", async() => {//this code only loading first browser ..peerA
+    const offer = await myPeerConnection.createOffer(); //make invitation to other browser to join
+    myPeerConnection.setLocalDescription(offer);
+    console.log("sent the offer");
+    socket.emit("offer", offer, roomName);
 });
+
+socket.on("offer",(offer)=>{
+    console.log(offer);
+})
+
+
+
+// RTC Code
+function   makeConnection(){
+    myPeerConnection = new RTCPeerConnection(); //crate peer to peer connection
+    myStream.getTracks().forEach(track => myPeerConnection.addTrack(track, myStream)); //put data inside peer connection
+    }
