@@ -21,6 +21,10 @@ html(lang="en")
                     button#camera Turn Camera Off
                     select#cameras
                     video#peerFace(autoplay, playsinline, width="400", height="100")
+                div#chat
+                    form#chatForm
+                        input#chatInput(type="text",name="text", required) 
+                        button#chatBtn(type="submit") Send
 
         script(src="/socket.io/socket.io.js") 
         script(src="/public/js/app.js")

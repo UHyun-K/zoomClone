@@ -7,6 +7,7 @@ const muteBtn = document.getElementById("mute");
 const cameraBtn = document.getElementById("camera");
 const camerasSelect = document.getElementById("cameras");
 const call = document.getElementById("call");
+const chatForm = document.getElementById("chatForm");
 call.hidden=true;
 
 let myStream;
@@ -14,6 +15,8 @@ let muted= false;
 let cameraOff = false;
 let roomName;
 let myPeerConnection;
+let myDataChannel;
+let myText;
 
 async function getCameras(){
 try{
@@ -121,14 +124,22 @@ welcomeForm.addEventListener("submit", handleWelcomeSubmit);
 
 // Socket Code
 
+
 socket.on("welcome", async() => {//this code only loading first browser ..peerA
+    myDataChannel =myPeerConnection.createDataChannel("chat"); //채널명
+
+    myDataChannel.addEventListener("message", console.log); 
     const offer = await myPeerConnection.createOffer(); //make invitation to other browser to join
     myPeerConnection.setLocalDescription(offer);
     console.log("sent the offer");
     socket.emit("offer", offer, roomName);
 });
 
-socket.on("offer",async (offer)=>{ //p2
+socket.on("offer",async (offer)=>{ //peerB
+    myPeerConnection.addEventListener("datachannel", (event)=>{
+        myDataChannel= event.channel;
+        myDataChannel.addEventListener("message",  console.log);
+    });
     console.log("received offer")
     myPeerConnection.setRemoteDescription(offer);
     const answer =  await myPeerConnection.createAnswer();
