@@ -3,6 +3,7 @@ const socket = io();
 
 
 const myFace = document.getElementById("myFace");
+const peerFace = document.getElementById("peerFace");
 const muteBtn = document.getElementById("mute");
 const cameraBtn = document.getElementById("camera");
 const camerasSelect = document.getElementById("cameras");
@@ -16,7 +17,7 @@ let cameraOff = false;
 let roomName;
 let myPeerConnection;
 let myDataChannel;
-let myText;
+let myMessage;
 
 async function getCameras(){
 try{
@@ -122,13 +123,47 @@ async function handleWelcomeSubmit(event) {
 
 welcomeForm.addEventListener("submit", handleWelcomeSubmit);
 
+
+//Chat 
+function addMessage(msg,name){
+    const chatContainer = document.getElementById("chatContainer");
+    const ul = chatContainer.querySelector("ul");
+    const li = document.createElement("li");
+    const span1 = document.createElement("span");
+    const span2 = document.createElement("span");
+
+
+    span1.innerText=name;
+    span2.innerText=msg;
+
+    ul.appendChild(li);
+    li.appendChild(span1);
+    li.appendChild(span2);
+}
+function handleChat(event){
+    event.preventDefault();
+    const chatInput =chatForm.querySelector("input");
+    const message = chatInput.value;
+    addMessage(message,"Me :  ");
+    chatInput.value="";
+   try{
+       myDataChannel.send(message);
+   }catch(e){
+       console.log(e);
+   }
+}
+
+chatForm.addEventListener("submit", handleChat);
+
 // Socket Code
 
-
+function handleMessage(event){
+    const msg = event.data;
+    addMessage(msg,"The person :  ");
+}
 socket.on("welcome", async() => {//this code only loading first browser ..peerA
     myDataChannel =myPeerConnection.createDataChannel("chat"); //채널명
-
-    myDataChannel.addEventListener("message", console.log); 
+    myDataChannel.addEventListener("message",handleMessage); 
     const offer = await myPeerConnection.createOffer(); //make invitation to other browser to join
     myPeerConnection.setLocalDescription(offer);
     console.log("sent the offer");
@@ -138,7 +173,7 @@ socket.on("welcome", async() => {//this code only loading first browser ..peerA
 socket.on("offer",async (offer)=>{ //peerB
     myPeerConnection.addEventListener("datachannel", (event)=>{
         myDataChannel= event.channel;
-        myDataChannel.addEventListener("message",  console.log);
+        myDataChannel.addEventListener("message", handleMessage);
     });
     console.log("received offer")
     myPeerConnection.setRemoteDescription(offer);
@@ -157,7 +192,10 @@ socket.on("ice", (ice)=>{
     console.log("received  candidate");
     myPeerConnection.addIceCandidate(ice);
 })
-
+socket.on("bye",()=>{
+    addMessage("Someone left","");
+    peerFace.hidden= true;
+})
 // RTC Code
 function   makeConnection(){
     myPeerConnection = new RTCPeerConnection({//crate peer to peer connection
@@ -184,6 +222,5 @@ function handleIce(data){
 
 }
 function handleAddStream(data) {
-    const peerFace = document.getElementById("peerFace");
     peerFace.srcObject = data.streams[0];
   }
